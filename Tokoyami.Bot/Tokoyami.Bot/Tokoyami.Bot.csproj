@@ -19,8 +19,4 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Modules\" />
-  </ItemGroup>
-
 </Project>

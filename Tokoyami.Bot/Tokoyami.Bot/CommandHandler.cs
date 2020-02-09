@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Discord.Commands;
 using Discord.WebSocket;
 using Discord;
@@ -25,7 +23,31 @@ namespace Tokoyami.Bot
         public async Task InitalizeAsync()
         {
             await _cmdService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            
+
+            _cmdService.Log += LogAsync;
+            _client.MessageReceived += HandleMessageAsync;
         } 
+
+        private async Task HandleMessageAsync(SocketMessage socketMessage)
+        {
+            var argPos = 0;
+
+            var userMessage = socketMessage as SocketUserMessage;
+
+            if (userMessage is null || socketMessage.Author.IsBot) return;
+
+
+            if (userMessage.HasStringPrefix("::", ref argPos) || userMessage.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            {
+                var context = new SocketCommandContext(_client, userMessage);
+                await _cmdService.ExecuteAsync(context, argPos, _services);
+            }
+        }
+
+        private Task LogAsync(LogMessage logMessage)
+        {
+            Console.WriteLine(logMessage.Message);
+            return Task.CompletedTask;
+        }
     }
 }
