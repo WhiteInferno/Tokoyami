@@ -23,12 +23,11 @@ namespace Tokoyami.Bot
 
         public Program()
         {
-             _client = new DiscordSocketClient(new DiscordSocketConfig
+            _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = true,
-                MessageCacheSize = 50,
                 LogLevel = LogSeverity.Debug
-             });
+            });
 
             _cmdService = new CommandService(new CommandServiceConfig { 
                 LogLevel = LogSeverity.Verbose,
@@ -53,10 +52,17 @@ namespace Tokoyami.Bot
                 .AddSingleton(_cmdService)
                 .BuildServiceProvider();
 
-            var cmdHandler = new CommandHandler(_client, _cmdService, _services);
-            await cmdHandler.InitalizeAsync();
+            await InitializeHandlers();
 
             await Task.Delay(-1);
+        }
+
+        private async Task InitializeHandlers()
+        {
+            var cmdHandler = new CommandHandler(_client, _cmdService, _services);
+            await cmdHandler.InitalizeAsync();
+            var reactHandle = new ReactionHandler(_client, _cmdService, _services);
+            await reactHandle.InitalizeAsync();
         }
 
         private async Task LogAsync(LogMessage msg) => await _logService.LogAsync(msg);
