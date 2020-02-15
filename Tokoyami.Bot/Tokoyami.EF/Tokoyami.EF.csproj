@@ -2,6 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <UserSecretsId>06b60f31-3c5d-4d7c-9230-b11e4d7e8ef3</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Context\2pqyqiq5.gpx~" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+    <Folder Include="Properties\" />
+  </ItemGroup>
 
 </Project>
