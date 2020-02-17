@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 
 namespace Tokoyami.Bot.Services
 {
-    public class LogService
+    public interface ILogServices
+    {
+        Task LogAsync(LogMessage arg);
+    }
+
+    public class LogService : ILogServices
     {
         private readonly SemaphoreSlim _semaphoreSlim;
 
@@ -16,14 +21,14 @@ namespace Tokoyami.Bot.Services
             _semaphoreSlim = new SemaphoreSlim(1);
         }
 
-        internal async Task LogAsync(LogMessage arg)
+        public async Task LogAsync(LogMessage arg)
         {
             await _semaphoreSlim.WaitAsync();
 
-            var timeStamp = DateTimeOffset.UtcNow.ToString("dd/MM/yyyy hh:mm tt");
+            var timeStamp = DateTimeOffset.Now.ToString("dd/MM/yyyy hh:mm tt");
             const string format = "{0,-10} {1,10}";
 
-            Console.WriteLine($"[{timeStamp}] {string.Format(format,arg.Source, $":{arg.Message}")}");
+            Console.WriteLine($"[{timeStamp}] {string.Format(format, arg.Source, $":{arg.Message}")}");
 
             _semaphoreSlim.Release();
         }

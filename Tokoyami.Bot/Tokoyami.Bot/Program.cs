@@ -1,56 +1,79 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 using Tokoyami.Bot.Services;
+using Tokoyami.Context;
+using Tokoyami.Context.Configuration;
 
 namespace Tokoyami.Bot
 {
     class Program
     {
+        static public IConfigurationRoot Configuration { get; set; }
+        static public IServiceProvider Service { get; set; }
+
         private readonly DiscordSocketClient _client;
-        private IServiceProvider _services;
-
         private readonly CommandService _cmdService;
-        private readonly LogService _logService;
-        private readonly ConfigService _configService;
+        private readonly ILogServices _logService;
+        private readonly IConfigServices _config;
 
-        private readonly Config _config;
-
-        static void Main(string[] args) => new Program().RunBotAsync().GetAwaiter().GetResult();
-
-        public Program()
+        static void Main(string[] args)
         {
-            _client = new DiscordSocketClient(new DiscordSocketConfig
+            Configuration = AppConfiguration.Get(ContentDirectoryFinder.CalculateContentRootFolder());
+
+            Service = ConfigureServices().BuildServiceProvider();
+
+            Service.GetService<Program>().RunBotAsync().GetAwaiter().GetResult();
+        }
+
+        public static IServiceCollection ConfigureServices()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = true,
                 LogLevel = LogSeverity.Debug
-            });
+            }));
 
-            _cmdService = new CommandService(new CommandServiceConfig { 
+            services.AddSingleton(new CommandService(new CommandServiceConfig
+            {
                 LogLevel = LogSeverity.Verbose,
                 CaseSensitiveCommands = false
-            });
+            }));
 
-            _logService = new LogService();
-            _configService = new ConfigService();
-            _config = _configService.GetConfig();
+            services.AddSingleton<ILogServices, LogService>();
+
+            services.AddSingleton<IConfigServices, ConfigService>();
+
+            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionString"]));
+
+            services.AddTransient<Program>();
+
+            return services;
+        }
+
+        public Program(DiscordSocketClient discordClient, IConfigServices configServices, CommandService cmdService, ILogServices logService)
+        {
+            this._client = discordClient;
+            this._config = configServices;
+            this._cmdService = cmdService;
+            this._logService = logService;
         }
 
         public async Task RunBotAsync()
         {
-            await _client.SetGameAsync("?help to see the commands");
-            await _client.LoginAsync(TokenType.Bot, _config.Token);
+            await _client.SetGameAsync("::help to see the commands");
+            await _client.LoginAsync(TokenType.Bot, _config.GetConfig().Token);
 
             await _client.StartAsync();
 
             _client.Log += LogAsync;
-            _services = new ServiceCollection()
-                .AddSingleton(_client)
-                .AddSingleton(_cmdService)
-                .BuildServiceProvider();
 
             await InitializeHandlers();
 
@@ -59,9 +82,9 @@ namespace Tokoyami.Bot
 
         private async Task InitializeHandlers()
         {
-            var cmdHandler = new CommandHandler(_client, _cmdService, _services);
+            var cmdHandler = new CommandHandler(_client, _cmdService, Service);
             await cmdHandler.InitalizeAsync();
-            var reactHandle = new ReactionHandler(_client, _cmdService, _services);
+            var reactHandle = new ReactionHandler(_client, _cmdService, Service);
             await reactHandle.InitalizeAsync();
         }
 

@@ -26,7 +26,7 @@ namespace Tokoyami.Bot
 
             _cmdService.Log += LogAsync;
             _client.MessageReceived += HandleMessageAsync;
-        } 
+        }
 
         private async Task HandleMessageAsync(SocketMessage socketMessage)
         {

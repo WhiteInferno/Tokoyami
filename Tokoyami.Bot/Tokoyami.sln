@@ -3,11 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29509.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokoyami.Bot", "Tokoyami.Bot\Tokoyami.Bot.csproj", "{87108471-C618-4960-9CEC-253B65B3B887}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.Bot", "Tokoyami.Bot\Tokoyami.Bot.csproj", "{87108471-C618-4960-9CEC-253B65B3B887}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A93A68B2-DF9C-4063-AD90-F2106EF710CE} = {A93A68B2-DF9C-4063-AD90-F2106EF710CE}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokoyami.EF", "Tokoyami.EF\Tokoyami.EF.csproj", "{9586F61C-9264-44E6-AF61-C47DE04F5C68}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.EF", "Tokoyami.EF\Tokoyami.EF.csproj", "{9586F61C-9264-44E6-AF61-C47DE04F5C68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokoyami.Business", "Tokoyami.Business\Tokoyami.Business.csproj", "{092C7F57-2771-44D9-92E1-2766D98FEA28}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.Business", "Tokoyami.Business\Tokoyami.Business.csproj", "{092C7F57-2771-44D9-92E1-2766D98FEA28}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.Context", "Tokoyami.Migration\Tokoyami.Context.csproj", "{A93A68B2-DF9C-4063-AD90-F2106EF710CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +32,10 @@ Global
 		{092C7F57-2771-44D9-92E1-2766D98FEA28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{092C7F57-2771-44D9-92E1-2766D98FEA28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{092C7F57-2771-44D9-92E1-2766D98FEA28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
