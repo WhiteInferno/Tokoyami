@@ -3,7 +3,12 @@ using Newtonsoft.Json;
 
 namespace Tokoyami.Bot.Services
 {
-    public class ConfigService
+    public interface IConfigServices
+    {
+        Config GetConfig();
+    }
+
+    public class ConfigService : IConfigServices
     {
         public Config GetConfig()
         {

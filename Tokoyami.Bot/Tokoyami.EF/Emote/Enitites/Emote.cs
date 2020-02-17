@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tokoyami.EF
 {
-    public class DiscordEmote
+    [Table("Emote",Schema ="discord")]
+    public class Emote
     {
         public int Id { get; set; }
 
