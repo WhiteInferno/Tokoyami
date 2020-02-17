@@ -6,18 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Context\2pqyqiq5.gpx~" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="EntityFramework" Version="6.4.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Repositories\" />
-    <Folder Include="Properties\" />
+    <Folder Include="Emote\Service\" />
   </ItemGroup>
 
 </Project>
