@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Folder Include="Emote\Service\" />
+    <Folder Include="Hangman\Service\" />
   </ItemGroup>
 
 </Project>
