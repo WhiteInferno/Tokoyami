@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tokoyami.Business.Contract;
@@ -43,6 +44,11 @@ namespace Tokoyami.Business.Business
                 this.wordRepository.Delete(word.Id);
                 await this.unitOfWork.Save();
             }
+        }
+
+        public async Task<IEnumerable<Word>> Get()
+        {
+            return this.wordRepository.Get();
         }
     }
 }
