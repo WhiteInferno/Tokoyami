@@ -24,8 +24,30 @@ namespace Tokoyami.UnitTest
         public async Task CreateWordAsync()
         {
             HangmanService _service = new HangmanService(new UnitOfWork(GetContext()));
-            var task = _service.Create("Yota");
-            await task;
+            string val = "hkjkjkjkjkjkjkjkjkj";
+            if (val.Length < 25)
+            {
+                int count = 0;
+                for (int i = 1; i < val.Length; i++)
+                {
+                    if (val[i - 1] == val[i])
+                    {
+                        count++;
+                    }
+                }
+
+                if (count >= val.Length - 1)
+                {
+                    Debug.WriteLine("Come on that's not a word, that's a keyboard smash!!");
+                }
+                else
+                {
+                    var task = _service.Create(val);
+                    await task;
+                    Debug.WriteLine("The word has been added successfully!");
+                }
+
+            }
         }
 
         [Fact]

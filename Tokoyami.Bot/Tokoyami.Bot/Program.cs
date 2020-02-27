@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Tokoyami.Bot.Common;
 using Tokoyami.Bot.Services;
 using Tokoyami.Context;
 using Tokoyami.Context.Configuration;
+using Tokoyami.EF.Hangman.Entities;
 
 namespace Tokoyami.Bot
 {
@@ -23,6 +26,17 @@ namespace Tokoyami.Bot
         private readonly IConfigServices _config;
         private readonly UnitOfWork _unitOfWork;
 
+        public static UnitOfWork UnitOfWork;
+
+        //Hangman
+        public static HangmanState HangmanState = HangmanState.STOPPED;
+        public static Word curWord = null;
+        public static List<char> letters = new List<char>();
+        public static List<char> foundLetters = new List<char>();
+        public static List<char> wrongLetters = new List<char>();
+        public static int errors = 0;
+        public static Boolean Found = false;
+        public static string tempword = null;
         static void Main(string[] args)
         {
             Configuration = AppConfiguration.Get(ContentDirectoryFinder.CalculateContentRootFolder());
@@ -72,6 +86,7 @@ namespace Tokoyami.Bot
             this._cmdService = cmdService;
             this._logService = logService;
             this._unitOfWork = unitOfWork;
+            UnitOfWork = _unitOfWork;
         }
 
         public async Task RunBotAsync()
@@ -82,7 +97,7 @@ namespace Tokoyami.Bot
             await _client.StartAsync();
 
             _client.Log += LogAsync;
-
+            
             await InitializeHandlers();
 
             await Task.Delay(-1);

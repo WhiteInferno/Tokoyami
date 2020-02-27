@@ -15,6 +15,7 @@ namespace Tokoyami.Bot
         private readonly CommandService _cmdService;
         private readonly IServiceProvider _services;
         private readonly UnitOfWork _unitOfWork;
+
         private HangmanService HangmanService { get; set; }
 
         public CommandHandler(DiscordSocketClient client
@@ -43,7 +44,6 @@ namespace Tokoyami.Bot
             var userMessage = socketMessage as SocketUserMessage;
 
             if (userMessage is null || socketMessage.Author.IsBot) return;
-
 
             if (userMessage.HasStringPrefix("::", ref argPos) || userMessage.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
