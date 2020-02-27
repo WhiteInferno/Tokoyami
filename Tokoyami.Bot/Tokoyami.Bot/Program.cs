@@ -21,6 +21,7 @@ namespace Tokoyami.Bot
         private readonly CommandService _cmdService;
         private readonly ILogServices _logService;
         private readonly IConfigServices _config;
+        private readonly UnitOfWork _unitOfWork;
 
         static void Main(string[] args)
         {
@@ -51,19 +52,26 @@ namespace Tokoyami.Bot
 
             services.AddSingleton<IConfigServices, ConfigService>();
 
-            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionString"]));
+            services.AddScoped<UnitOfWork>();
+
+            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionStrings:Default"]));//ConnectionString ...... >W>
 
             services.AddTransient<Program>();
 
             return services;
         }
 
-        public Program(DiscordSocketClient discordClient, IConfigServices configServices, CommandService cmdService, ILogServices logService)
+        public Program(DiscordSocketClient discordClient,
+            IConfigServices configServices,
+            CommandService cmdService,
+            ILogServices logService,
+            UnitOfWork unitOfWork)
         {
             this._client = discordClient;
             this._config = configServices;
             this._cmdService = cmdService;
             this._logService = logService;
+            this._unitOfWork = unitOfWork;
         }
 
         public async Task RunBotAsync()
@@ -82,7 +90,7 @@ namespace Tokoyami.Bot
 
         private async Task InitializeHandlers()
         {
-            var cmdHandler = new CommandHandler(_client, _cmdService, Service);
+            var cmdHandler = new CommandHandler(_client, _cmdService, Service, _unitOfWork);
             await cmdHandler.InitalizeAsync();
             var reactHandle = new ReactionHandler(_client, _cmdService, Service);
             await reactHandle.InitalizeAsync();
