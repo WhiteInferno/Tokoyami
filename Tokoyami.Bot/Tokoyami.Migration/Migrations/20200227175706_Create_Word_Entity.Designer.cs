@@ -2,15 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tokoyami.Context;
 
 namespace Tokoyami.Context.Migrations
 {
     [DbContext(typeof(TokoyamiDbContext))]
-    partial class TokoyamiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200227175706_Create_Word_Entity")]
+    partial class Create_Word_Entity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -37,7 +37,7 @@ namespace Tokoyami.Business.Business
 
         public async Task Remove(string description)
         {
-            var word = this.wordRepository.Get().Where(x => x.Descripcion.ToUpper().Equals(description)).FirstOrDefault();
+            var word = this.wordRepository.Get().Where(x => x.Descripcion.ToUpper() == description.ToUpper()).FirstOrDefault();
             if (word != null)
             {
                 this.wordRepository.Delete(word.Id);
