@@ -54,7 +54,7 @@ namespace Tokoyami.Bot
 
             services.AddScoped<UnitOfWork>();
 
-            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionStrings:Default"]));//ConnectionString ...... >W>
+            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionStrings:Default"]));//ConnectionString
 
             services.AddTransient<Program>();
 
