@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.Business", "Tokoya
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokoyami.Context", "Tokoyami.Migration\Tokoyami.Context.csproj", "{A93A68B2-DF9C-4063-AD90-F2106EF710CE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokoyami.UnitTest", "Tokoyami.UnitTest\Tokoyami.UnitTest.csproj", "{27D5B5DC-2F94-496F-A9E4-94AF0AF1ACDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A93A68B2-DF9C-4063-AD90-F2106EF710CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27D5B5DC-2F94-496F-A9E4-94AF0AF1ACDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27D5B5DC-2F94-496F-A9E4-94AF0AF1ACDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27D5B5DC-2F94-496F-A9E4-94AF0AF1ACDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27D5B5DC-2F94-496F-A9E4-94AF0AF1ACDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

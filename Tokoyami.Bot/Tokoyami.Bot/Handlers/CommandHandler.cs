@@ -4,6 +4,8 @@ using Discord.WebSocket;
 using Discord;
 using System.Threading.Tasks;
 using System.Reflection;
+using Tokoyami.Context.Configuration;
+using Tokoyami.Business.Business;
 
 namespace Tokoyami.Bot
 {
@@ -13,7 +15,11 @@ namespace Tokoyami.Bot
         private readonly CommandService _cmdService;
         private readonly IServiceProvider _services;
 
-        public CommandHandler(DiscordSocketClient client, CommandService cmdService, IServiceProvider services)
+        private HangmanService HangmanService { get; set; }
+
+        public CommandHandler(DiscordSocketClient client
+            , CommandService cmdService
+            , IServiceProvider services)
         {
             _client = client;
             _cmdService = cmdService;
@@ -35,7 +41,6 @@ namespace Tokoyami.Bot
             var userMessage = socketMessage as SocketUserMessage;
 
             if (userMessage is null || socketMessage.Author.IsBot) return;
-
 
             if (userMessage.HasStringPrefix("::", ref argPos) || userMessage.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {

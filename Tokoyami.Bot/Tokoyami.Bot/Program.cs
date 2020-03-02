@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Tokoyami.Bot.Common;
+using Tokoyami.Bot.Dto;
 using Tokoyami.Bot.Services;
 using Tokoyami.Context;
 using Tokoyami.Context.Configuration;
+using Tokoyami.EF.Hangman.Entities;
 
 namespace Tokoyami.Bot
 {
@@ -21,7 +25,9 @@ namespace Tokoyami.Bot
         private readonly CommandService _cmdService;
         private readonly ILogServices _logService;
         private readonly IConfigServices _config;
+        private readonly UnitOfWork _unitOfWork;
 
+        public static HangmanDto Hangman = new HangmanDto();
         static void Main(string[] args)
         {
             Configuration = AppConfiguration.Get(ContentDirectoryFinder.CalculateContentRootFolder());
@@ -51,19 +57,26 @@ namespace Tokoyami.Bot
 
             services.AddSingleton<IConfigServices, ConfigService>();
 
-            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionString"]));
+            services.AddScoped<UnitOfWork>();
+
+            services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionStrings:Default"]));//ConnectionString
 
             services.AddTransient<Program>();
 
             return services;
         }
 
-        public Program(DiscordSocketClient discordClient, IConfigServices configServices, CommandService cmdService, ILogServices logService)
+        public Program(DiscordSocketClient discordClient,
+            IConfigServices configServices,
+            CommandService cmdService,
+            ILogServices logService,
+            UnitOfWork unitOfWork)
         {
             this._client = discordClient;
             this._config = configServices;
             this._cmdService = cmdService;
             this._logService = logService;
+            this._unitOfWork = unitOfWork;
         }
 
         public async Task RunBotAsync()
@@ -74,7 +87,7 @@ namespace Tokoyami.Bot
             await _client.StartAsync();
 
             _client.Log += LogAsync;
-
+            
             await InitializeHandlers();
 
             await Task.Delay(-1);

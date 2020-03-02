@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Tokoyami.EF;
+using Tokoyami.EF.Hangman.Entities;
 
 namespace Tokoyami.Context
 {
@@ -11,5 +12,7 @@ namespace Tokoyami.Context
             : base(options) {}
 
         public DbSet<Emote> Emotes { get; set; }
+
+        public DbSet<Word> Words { get; set; }
     }
 }
