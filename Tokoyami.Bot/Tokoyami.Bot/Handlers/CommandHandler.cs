@@ -14,19 +14,16 @@ namespace Tokoyami.Bot
         private readonly DiscordSocketClient _client;
         private readonly CommandService _cmdService;
         private readonly IServiceProvider _services;
-        private readonly UnitOfWork _unitOfWork;
 
         private HangmanService HangmanService { get; set; }
 
         public CommandHandler(DiscordSocketClient client
             , CommandService cmdService
-            , IServiceProvider services
-            , UnitOfWork unitOfWork)
+            , IServiceProvider services)
         {
             _client = client;
             _cmdService = cmdService;
             _services = services;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task InitalizeAsync()

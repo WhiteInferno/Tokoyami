@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tokoyami.Bot.Common;
+using Tokoyami.Bot.Dto;
 using Tokoyami.Bot.Services;
 using Tokoyami.Context;
 using Tokoyami.Context.Configuration;
@@ -26,17 +27,7 @@ namespace Tokoyami.Bot
         private readonly IConfigServices _config;
         private readonly UnitOfWork _unitOfWork;
 
-        public static UnitOfWork UnitOfWork;
-
-        //Hangman
-        public static HangmanState HangmanState = HangmanState.STOPPED;
-        public static Word curWord = null;
-        public static List<char> letters = new List<char>();
-        public static List<char> foundLetters = new List<char>();
-        public static List<char> wrongLetters = new List<char>();
-        public static int errors = 0;
-        public static Boolean Found = false;
-        public static string tempword = null;
+        public static HangmanDto Hangman = new HangmanDto();
         static void Main(string[] args)
         {
             Configuration = AppConfiguration.Get(ContentDirectoryFinder.CalculateContentRootFolder());
@@ -86,7 +77,6 @@ namespace Tokoyami.Bot
             this._cmdService = cmdService;
             this._logService = logService;
             this._unitOfWork = unitOfWork;
-            UnitOfWork = _unitOfWork;
         }
 
         public async Task RunBotAsync()
@@ -105,7 +95,7 @@ namespace Tokoyami.Bot
 
         private async Task InitializeHandlers()
         {
-            var cmdHandler = new CommandHandler(_client, _cmdService, Service, _unitOfWork);
+            var cmdHandler = new CommandHandler(_client, _cmdService, Service);
             await cmdHandler.InitalizeAsync();
             var reactHandle = new ReactionHandler(_client, _cmdService, Service);
             await reactHandle.InitalizeAsync();

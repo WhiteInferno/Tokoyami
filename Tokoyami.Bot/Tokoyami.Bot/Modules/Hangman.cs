@@ -15,7 +15,12 @@ namespace Tokoyami.Bot.Modules
 {
     public class Hangman : ModuleBase<SocketCommandContext>
     {
-        private IHangmanService _service = new HangmanService(Program.UnitOfWork);
+        private readonly IHangmanService _service;
+
+        public Hangman(UnitOfWork unitOfWork)
+        {
+            _service = new HangmanService(unitOfWork);
+        }
 
         [Command("hangman"), Alias("hm")]
         [Summary("::hm add word | ::hm delete word | ::hm start | ::hm stop")]
@@ -66,42 +71,34 @@ namespace Tokoyami.Bot.Modules
                     await _service.Remove(val);
                     break;
                 case "start":
-                    Program.HangmanState = HangmanState.STARTED;
+                    Program.Hangman.State = HangmanState.STARTED;
                     Random r = new Random();
                     int ran = r.Next(0, words.Count());
-                    Program.curWord = words.ElementAt(ran);
-                    string st = "";
-                    for (int i = 0; i < Program.curWord.Descripcion.Length; i++)
+                    Program.Hangman.CurrentWord = words.ElementAt(ran);
+                    StringBuilder hiddenLetter = new StringBuilder();
+                    for (int i = 0; i < Program.Hangman.CurrentWord.Descripcion.Length; i++)
                     {
-                        st += "?";
+                        hiddenLetter.Append("?");
                     }
-                    await ReplyAsync("Current word : " + st);
+                    await ReplyAsync($"Current word : {hiddenLetter.ToString()}");
 
-                    foreach (var v in Program.curWord.Descripcion)
+                    foreach (var v in Program.Hangman.CurrentWord.Descripcion)
                     {
-                        if (!Program.letters.Contains(v))
+                        if (!Program.Hangman.Letters.Contains(v))
                         {
-                            Program.letters.Add(v);
+                            (Program.Hangman.Letters as List<char>).Add(v);
                         }
                     }
                     break;
                 case "stop":
-                    Program.HangmanState = HangmanState.STOPPED;
-                    Program.foundLetters.Clear();
-                    Program.letters.Clear();
-                    Program.wrongLetters.Clear();
-                    Program.errors = 0;
                     await ReplyAsync("This game of hangman stopped!");
+                    ResetHangman();
                     break;
                 default:
-                    if (comm == Program.curWord.Descripcion)
+                    if (comm == Program.Hangman.CurrentWord.Descripcion)
                     {
                         await ReplyAsync($"You guys won!");
-                        Program.HangmanState = HangmanState.STOPPED;
-                        Program.foundLetters.Clear();
-                        Program.letters.Clear();
-                        Program.wrongLetters.Clear();
-                        Program.errors = 0;
+                        ResetHangman();
                     }
                     break;
             }
@@ -110,148 +107,140 @@ namespace Tokoyami.Bot.Modules
         [Command("hangman"), Alias("hm")]
         public async Task CharReceived(char val)
         {
-            string wrongLetters = "Wrong : ";
+           StringBuilder wrongLetters = new StringBuilder("Wrong : ");
             val = char.ToLower(val);
-            if (Program.HangmanState == HangmanState.STARTED)
+            if (Program.Hangman.State == HangmanState.STARTED)
             {
+                StringBuilder hiddenLetter = new StringBuilder(string.Empty);
 
-                //User u = Program.UL[Context.User.Id];
-                //if (!Program.Participants.Contains(u))
-                //{
-                //    Program.Participants.Add(u);
-                //}
-
-                string s = "";
-
-                foreach (char c in Program.curWord.Descripcion)
+                foreach (char c in Program.Hangman.CurrentWord.Descripcion)
                 {
                     if (char.ToUpper(c) == char.ToUpper(val))
                     {
-                        s += c;
-                        Program.Found = true;
-                        if (!Program.foundLetters.Contains(c))
+                        hiddenLetter.Append(c);
+                        Program.Hangman.Found = true;
+                        if (!Program.Hangman.FoundLetters.Contains(c))
                         {
-                            Program.foundLetters.Add(c);
+                            (Program.Hangman.FoundLetters as List<char>).Add(c);
                         }
                     }
                     else
                     {
-
-                        if (Program.foundLetters.Contains(c))
-                        {
-                            s += c;
-                        }
+                        if (Program.Hangman.FoundLetters.Contains(c))
+                            hiddenLetter.Append(c);
                         else
-                            s += "?";
+                            hiddenLetter.Append("?");
                     }
                 }
 
-                Program.tempword = s;
+                Program.Hangman.TempWord = hiddenLetter.ToString();
 
-                if (Program.Found == false && Program.errors < 10)
+                if (Program.Hangman.Found == false && Program.Hangman.Errors < 10)
                 {
-                    if (!Program.wrongLetters.Contains(val))
+                    if (!Program.Hangman.WrongLetters.Contains(val))
                     {
-                        Program.errors++;
-                        Program.wrongLetters.Add(val);
+                        Program.Hangman.Errors++;
+                        (Program.Hangman.WrongLetters as List<char>).Add(val);
                     }
 
                 }
 
-                Program.Found = false;
-                string s2 = "";
+                Program.Hangman.Found = false;
+                StringBuilder hangman = new StringBuilder(string.Empty);
 
-                switch (Program.errors)
+                switch (Program.Hangman.Errors)
                 {
                     case 1:
-                        s2 = "|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_1);
                         break;
 
                     case 2:
-                        s2 = "|\n|\n|\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_2);
                         break;
 
                     case 3:
-                        s2 = "\n______\n|\n|\n|\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_3);
                         break;
 
                     case 4:
-                        s2 = "\n______\n|  |\n|\n|\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_4);
                         break;
 
                     case 5:
-                        s2 = "\n______\n|  |\n|  0\n|\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_5);
                         break;
 
                     case 6:
-                        s2 = "\n______\n|  |\n|  0\n| /|\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_6);
                         break;
 
                     case 7:
-                        s2 = "\n______\n|  |\n|  0\n| /|\\\n|\n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_7);
                         break;
 
                     case 8:
-                        s2 = "\n______\n|  |\n|  0\n| /|\\\n| / \n|\n|___";
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_8);
                         break;
 
                     case 9:
-                        var messages = await Context.Channel.GetMessagesAsync(2).Flatten().First();
+                        var messages = await Context.Channel.GetMessagesAsync(2).Flatten().ToList();
 
-                        await Context.Channel.DeleteMessageAsync(messages);
-                        s2 = "\n______\n|  |\n|  0\n| /|\\\n| / \\\n|\n|___";
-                        await ReplyAsync("```" + wrongLetters + "\n\n" + s2 + "```\nYou guys lost! The word was " + Program.curWord);
+                        foreach (var item in messages)
+                        {
+                            await Context.Channel.DeleteMessageAsync(item);
+                        }
 
-                        Program.HangmanState = HangmanState.STOPPED;
-                        Program.foundLetters.Clear();
-                        Program.letters.Clear();
-                        Program.wrongLetters.Clear();
-                        Program.errors = 0;
+                        hangman.Append(TemplateMsj.HANGMAN_ATTEMPT_9);
+                        
+                        await ReplyAsync($"```{wrongLetters.ToString()}\n\n{hangman.ToString()}```\nYou guys lost! The word was {Program.Hangman.CurrentWord}");
+                        
+                        ResetHangman();
                         break;
                 }
 
 
-                if (Program.HangmanState == HangmanState.STARTED)
+                if (Program.Hangman.State == HangmanState.STARTED)
                 {
-                    if (Program.errors > 0)
+                    if (Program.Hangman.Errors > 0)
                     {
 
-                        foreach (var v in Program.wrongLetters)
+                        foreach (var v in Program.Hangman.WrongLetters)
                         {
-                            wrongLetters += v + " ";
+                            wrongLetters.Append(v + " ");
                         }
 
-                        var messages = await Context.Channel.GetMessagesAsync(2).Flatten().First();
+                        var messages = await Context.Channel.GetMessagesAsync(2).Flatten().ToList();
 
-                        await Context.Channel.DeleteMessageAsync(messages);
+                        foreach(var item in messages)
+                        {
+                            await Context.Channel.DeleteMessageAsync(item);
+                        }
 
-                        await ReplyAsync("```" + wrongLetters + "\n\n" + s2 + "``` \n\nThe word is : " + Program.tempword + "\n");
+                        await ReplyAsync($"```{wrongLetters.ToString()}\n\n{hangman.ToString()}``` \n\nThe word is : {Program.Hangman.TempWord}\n");
                     }
                     else
-                        await ReplyAsync("\n\nThe word is : " + Program.tempword + "\n");
+                        await ReplyAsync($"\n\nThe word is : {Program.Hangman.TempWord}\n");
 
-                    if (Program.foundLetters.Count == Program.letters.Count)
+                    if (Program.Hangman.FoundLetters.Count() == Program.Hangman.Letters.Count())
                     {
-                        //int res = (int)(Program.letters.Count / 2) * Program.CookieCoef;
                         await ReplyAsync($"You guys won!");
-                        //foreach (var v in Program.Participants)
-                        //{
-                        //    v.gainCookies(res);
-                        //    Program.SaveUs(v);
-                        //    //v.plays++;
-                        //}
-                        Program.HangmanState = HangmanState.STOPPED;
-                        Program.foundLetters.Clear();
-                        Program.letters.Clear();
-                        Program.wrongLetters.Clear();
-                        Program.errors = 0;
+                        ResetHangman();
                     }
                 }
             }
             else
             {
-                await ReplyAsync("You can't play since no hangman game is started!\nUse '!hm start' for that!");
+                await ReplyAsync("You can't play since no hangman game is started!\nUse '::hm start' for that!");
             }
+        }
+
+        private void ResetHangman()
+        {
+            Program.Hangman.State = HangmanState.STOPPED;
+            (Program.Hangman.FoundLetters as List<char>).Clear();
+            (Program.Hangman.Letters as List<char>).Clear();
+            (Program.Hangman.WrongLetters as List<char>).Clear();
+            Program.Hangman.Errors = 0;
         }
     }
 }
