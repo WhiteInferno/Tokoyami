@@ -287,7 +287,7 @@ namespace Tokoyami.Bot.Modules
         }
 
         [Command("Seek")]
-        public async Task SeekAsync(TimeSpan timeSpan)
+        public async Task SeekAsync(TimeSpan? timeSpan = null)
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
             {
@@ -298,6 +298,12 @@ namespace Tokoyami.Bot.Modules
             if (player.PlayerState != PlayerState.Playing)
             {
                 await ReplyAsync("Woaaah there, I can't seek when nothing is playing.");
+                return;
+            }
+
+            if(timeSpan == null)
+            {
+                await ReplyAsync("You have to send me the time with the follow format `0`h`00`m`00`s");
                 return;
             }
 
