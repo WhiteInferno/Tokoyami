@@ -8,10 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tokoyami.Bot.Common;
+using Tokoyami.Bot.Handlers;
 using Tokoyami.Bot.Services;
 using Tokoyami.Context;
 using Tokoyami.Context.Configuration;
 using Tokoyami.EF.Hangman.Entities;
+using Victoria;
 
 namespace Tokoyami.Bot
 {
@@ -21,6 +23,7 @@ namespace Tokoyami.Bot
         static public IServiceProvider Service { get; set; }
 
         private readonly DiscordSocketClient _client;
+        private readonly LavaNode _lavaNode;
         private readonly CommandService _cmdService;
         private readonly ILogServices _logService;
         private readonly IConfigServices _config;
@@ -66,6 +69,12 @@ namespace Tokoyami.Bot
 
             services.AddSingleton<IConfigServices, ConfigService>();
 
+            services.AddSingleton(new LavaConfig() {
+                SelfDeaf = false
+            });
+
+            services.AddSingleton<LavaNode>();
+
             services.AddScoped<UnitOfWork>();
 
             services.AddDbContext<TokoyamiDbContext>(opt => opt.UseSqlServer(Configuration["ConnectionStrings:Default"]));//ConnectionString
@@ -79,7 +88,8 @@ namespace Tokoyami.Bot
             IConfigServices configServices,
             CommandService cmdService,
             ILogServices logService,
-            UnitOfWork unitOfWork)
+            UnitOfWork unitOfWork,
+            LavaNode lavaNode)
         {
             this._client = discordClient;
             this._config = configServices;
@@ -87,6 +97,7 @@ namespace Tokoyami.Bot
             this._logService = logService;
             this._unitOfWork = unitOfWork;
             UnitOfWork = _unitOfWork;
+            this._lavaNode = lavaNode;
         }
 
         public async Task RunBotAsync()
@@ -105,10 +116,12 @@ namespace Tokoyami.Bot
 
         private async Task InitializeHandlers()
         {
-            var cmdHandler = new CommandHandler(_client, _cmdService, Service, _unitOfWork);
+            var cmdHandler = new CommandHandler(_client, _cmdService, Service, _logService);
             await cmdHandler.InitalizeAsync();
-            var reactHandle = new ReactionHandler(_client, _cmdService, Service);
+            var reactHandle = new ReactionHandler(_client, _cmdService, Service, _logService);
             await reactHandle.InitalizeAsync();
+            var musicHandler = new MusicHandler(_client,_lavaNode, _logService);
+            await musicHandler.InitalizeAsync();
         }
 
         private async Task LogAsync(LogMessage msg) => await _logService.LogAsync(msg);

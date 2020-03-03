@@ -1,56 +1,85 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Tokoyami.Bot.Services;
+using Victoria;
+using Victoria.EventArgs;
 
 namespace Tokoyami.Bot.Handlers
 {
     public class MusicHandler
     {
         private readonly DiscordSocketClient _client;
-        private readonly CommandService _cmdService;
-        private readonly IServiceProvider _services;
+        private readonly LavaNode _lavaNode;
+        private readonly ILogServices _logService;
 
-        public MusicHandler(DiscordSocketClient client,
-            CommandService cmdService,
-            IServiceProvider services)
+        public MusicHandler(DiscordSocketClient client, LavaNode lavaNode, ILogServices logService)
         {
             this._client = client;
-            this._cmdService = cmdService;
-            this._services = services;
+            this._lavaNode = lavaNode;
+            this._logService = logService;
         }
 
-        public async Task InitalizeAsync()
+        public Task InitalizeAsync()
         {
-            await this._cmdService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-
-            this._cmdService.Log += LogAsync;
-            this._client.MessageReceived += HandleMessageAsync;
-        }
-
-        private async Task HandleMessageAsync(SocketMessage socketMessage)
-        {
-            var argPos = 0;
-
-            var userMessage = socketMessage as SocketUserMessage;
-
-            if (userMessage is null || socketMessage.Author.IsBot) return;
-
-            if (userMessage.HasStringPrefix("m!", ref argPos) || userMessage.HasMentionPrefix(_client.CurrentUser, ref argPos))
-            {
-                var context = new SocketCommandContext(_client, userMessage);
-                await _cmdService.ExecuteAsync(context, argPos, _services);
-            }
-        }
-
-        private Task LogAsync(LogMessage logMessage)
-        {
-            Console.WriteLine(logMessage.Message);
+            this._client.Ready += OnReady;
+            this._lavaNode.OnLog += LogAsync;
+            this._lavaNode.OnPlayerUpdated += OnPlayerUpdated;
+            this._lavaNode.OnStatsReceived += OnStatsReceived;
+            this._lavaNode.OnTrackEnded += OnTrackEnded;
+            this._lavaNode.OnTrackException += OnTrackException;
+            this._lavaNode.OnTrackStuck += OnTrackStuck;
+            this._lavaNode.OnWebSocketClosed += OnWebSocketClosed;
             return Task.CompletedTask;
         }
+
+        private Task OnPlayerUpdated(PlayerUpdateEventArgs arg) 
+            => this.LogAsync(new LogMessage(LogSeverity.Info, "Victoria", $"Player update received for {arg.Player.VoiceChannel.Name}.", null));
+
+        private Task OnStatsReceived(StatsEventArgs arg)
+            => this.LogAsync(new LogMessage(LogSeverity.Info, "Victoria", $"Lavalink Uptime {arg.Uptime}.", null));
+
+        private async Task OnTrackEnded(TrackEndedEventArgs args)
+        {
+            if (!args.Reason.ShouldPlayNext())
+                return;
+
+            var player = args.Player;
+            if (!player.Queue.TryDequeue(out var queueable))
+            {
+                await player.TextChannel.SendMessageAsync("No more tracks to play.");
+                return;
+            }
+
+            if (!(queueable is LavaTrack track))
+            {
+                await player.TextChannel.SendMessageAsync("Next item in queue is not a track.");
+                return;
+            }
+
+            await args.Player.PlayAsync(track);
+            await args.Player.TextChannel.SendMessageAsync(
+                $"{args.Reason}: {args.Track.Title}\nNow playing: {track.Title}");
+        }
+
+        private Task OnTrackException(TrackExceptionEventArgs arg)
+            => this.LogAsync(new LogMessage(LogSeverity.Critical, "Victoria", $"Track exception received for {arg.Track.Title}.", null));
+
+        private Task OnTrackStuck(TrackStuckEventArgs arg) 
+            => this.LogAsync(new LogMessage(LogSeverity.Error, "Victoria", $"Track stuck received for {arg.Track.Title}.", null));
+
+        private Task OnWebSocketClosed(WebSocketClosedEventArgs arg)
+            => this.LogAsync(new LogMessage(LogSeverity.Critical, "Victoria", $"Discord WebSocket connection closed with following reason: {arg.Reason}", null));
+
+        private async Task OnReady() => await _lavaNode.ConnectAsync();
+
+        private async Task LogAsync(LogMessage msg) => await _logService.LogAsync(msg);
+
     }
 }

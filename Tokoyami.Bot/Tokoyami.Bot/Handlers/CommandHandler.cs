@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Tokoyami.Context.Configuration;
 using Tokoyami.Business.Business;
+using Tokoyami.Bot.Services;
 
 namespace Tokoyami.Bot
 {
@@ -14,19 +15,17 @@ namespace Tokoyami.Bot
         private readonly DiscordSocketClient _client;
         private readonly CommandService _cmdService;
         private readonly IServiceProvider _services;
-        private readonly UnitOfWork _unitOfWork;
-
-        private HangmanService HangmanService { get; set; }
+        private readonly ILogServices _logService;
 
         public CommandHandler(DiscordSocketClient client
             , CommandService cmdService
             , IServiceProvider services
-            , UnitOfWork unitOfWork)
+            ,ILogServices logService)
         {
             _client = client;
             _cmdService = cmdService;
             _services = services;
-            _unitOfWork = unitOfWork;
+            _logService = logService;
         }
 
         public async Task InitalizeAsync()
@@ -52,10 +51,6 @@ namespace Tokoyami.Bot
             }
         }
 
-        private Task LogAsync(LogMessage logMessage)
-        {
-            Console.WriteLine(logMessage.Message);
-            return Task.CompletedTask;
-        }
+        private async Task LogAsync(LogMessage msg) => await _logService.LogAsync(msg);
     }
 }
