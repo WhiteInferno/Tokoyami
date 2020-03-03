@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tokoyami.Bot.Services;
 using Victoria;
 using Victoria.Enums;
 using Victoria.Responses.Rest;
@@ -16,10 +17,12 @@ namespace Tokoyami.Bot.Modules
     {
         private readonly LavaNode _lavaNode;
         private static readonly IEnumerable<int> Range = Enumerable.Range(1900, 2000);
+        private readonly ILogServices _logService;
 
-        public Music(LavaNode lavaNode)
+        public Music(LavaNode lavaNode, ILogServices logService)
         {
             this._lavaNode = lavaNode;
+            this._logService = logService;
         }
 
         [Command("join")]
@@ -45,7 +48,9 @@ namespace Tokoyami.Bot.Modules
             }
             catch(Exception ex)
             {
-                await ReplyAsync(ex.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't join to the VC!");
+                return;
             }
         }
 
@@ -72,7 +77,9 @@ namespace Tokoyami.Bot.Modules
             }
             catch(Exception ex)
             {
-                throw ex;
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't play the music!");
+                return;
             }
 
             if (searchResponse.LoadStatus == LoadStatus.LoadFailed ||
@@ -132,7 +139,9 @@ namespace Tokoyami.Bot.Modules
                     }
                     catch(Exception ex)
                     {
-                        throw ex;
+                        await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                        await ReplyAsync($"{track.Title} couldn't be played!");
+                        return;
                     }
                 }
             }
@@ -159,9 +168,10 @@ namespace Tokoyami.Bot.Modules
                 await _lavaNode.LeaveAsync(voiceChannel);
                 await ReplyAsync($"I've left {voiceChannel.Name}!");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't leave the VC!");
             }
         }
 
@@ -185,9 +195,10 @@ namespace Tokoyami.Bot.Modules
                 await player.PauseAsync();
                 await ReplyAsync($"Paused: {player.Track.Title}");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't pause the music!");
             }
         }
 
@@ -211,9 +222,10 @@ namespace Tokoyami.Bot.Modules
                 await player.ResumeAsync();
                 await ReplyAsync($"Resumed: {player.Track.Title}");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't resume the music!");
             }
         }
 
@@ -237,9 +249,10 @@ namespace Tokoyami.Bot.Modules
                 await player.StopAsync();
                 await ReplyAsync("No longer playing anything.");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't stop the music!");
             }
         }
 
@@ -266,9 +279,10 @@ namespace Tokoyami.Bot.Modules
                 var currenTrack = await player.SkipAsync();
                 await ReplyAsync($"Skipped: {oldTrack.Title}\nNow Playing: {currenTrack.Title}");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't skip the music!");
             }
         }
 
@@ -292,9 +306,10 @@ namespace Tokoyami.Bot.Modules
                 await player.SeekAsync(timeSpan);
                 await ReplyAsync($"I've seeked `{player.Track.Title}` to {timeSpan}.");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't seek the music!");
             }
         }
 
@@ -312,9 +327,10 @@ namespace Tokoyami.Bot.Modules
                 await player.UpdateVolumeAsync(volume);
                 await ReplyAsync($"I've changed the player volume to {volume}.");
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await ReplyAsync(exception.Message);
+                await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                await ReplyAsync("Something happened that i can't set the volume!");
             }
         }
 
@@ -388,5 +404,6 @@ namespace Tokoyami.Bot.Modules
 
             await ReplyAsync($"```{stringBuilder}```");
         }
+        private Task LogAsync(LogMessage msg) => _logService.LogAsync(msg);
     }
 }
