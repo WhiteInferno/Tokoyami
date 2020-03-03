@@ -324,8 +324,15 @@ namespace Tokoyami.Bot.Modules
 
             try
             {
-                await player.UpdateVolumeAsync(volume);
-                await ReplyAsync($"I've changed the player volume to {volume}.");
+                if(volume >= 0 && volume <= 100)
+                {
+                    await player.UpdateVolumeAsync(volume);
+                    await ReplyAsync($"I've changed the player volume to {volume}.");
+                }
+                else
+                {
+                    await ReplyAsync("Set the volume in a value between 0 to 100.");
+                }
             }
             catch (Exception ex)
             {
