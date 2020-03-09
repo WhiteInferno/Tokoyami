@@ -7,8 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tokoyami.Bot.Services;
+using Tokoyami.EF.Music;
 using Victoria;
 using Victoria.Enums;
+using Victoria.Interfaces;
 using Victoria.Responses.Rest;
 
 namespace Tokoyami.Bot.Modules
@@ -18,6 +20,7 @@ namespace Tokoyami.Bot.Modules
         private readonly LavaNode _lavaNode;
         private static readonly IEnumerable<int> Range = Enumerable.Range(1900, 2000);
         private readonly ILogServices _logService;
+        private Playlist playList { get; set; }
 
         public Music(LavaNode lavaNode, ILogServices logService)
         {
@@ -111,6 +114,11 @@ namespace Tokoyami.Bot.Modules
             }
             else
             {
+                if(this.playList == null)
+                {
+                    this.playList = new Playlist();
+                }
+
                 var track = searchResponse.Tracks[0];
 
                 if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
@@ -147,7 +155,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Leave")]
+        [Command("leave")]
         public async Task LeaveAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -175,7 +183,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Pause")]
+        [Command("pause")]
         public async Task PauseAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -202,7 +210,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Resume")]
+        [Command("resume")]
         public async Task ResumeAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -229,7 +237,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Stop")]
+        [Command("stop")]
         public async Task StopAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -256,7 +264,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Skip")]
+        [Command("skip")]
         public async Task SkipAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -286,7 +294,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Seek")]
+        [Command("seek")]
         public async Task SeekAsync(TimeSpan? timeSpan = null)
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -319,7 +327,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("Volume")]
+        [Command("volume")]
         public async Task VolumeAsync(ushort volume)
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -378,8 +386,8 @@ namespace Tokoyami.Bot.Modules
             await ReplyAsync(embed: embed.Build());
         }
 
-        [Command("Genius", RunMode = RunMode.Async)]
-        public async Task ShowGeniusLyrics() //Nani?
+        [Command("queue")]
+        public async Task ShowQueue(int index = 1)
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
             {
@@ -387,36 +395,35 @@ namespace Tokoyami.Bot.Modules
                 return;
             }
 
-            if (player.PlayerState != PlayerState.Playing)
+            var queue = player.Queue;
+
+            if(queue.Count == 0)
             {
-                await ReplyAsync("Woaaah there, I'm not playing any tracks.");
-                return;
+                await ReplyAsync("Not currently playing anything.");
             }
 
-            var lyrics = await player.Track.FetchLyricsFromGeniusAsync();
-            if (string.IsNullOrWhiteSpace(lyrics))
+            StringBuilder queueMsg = new StringBuilder("```nimrod\n");
+            IEnumerable<IQueueable> tracks = null;
+            if(index == 1)
             {
-                await ReplyAsync($"No lyrics found for {player.Track.Title}");
-                return;
+                tracks = queue.Items.Take(10);
+            }
+            else
+            {
+                tracks = queue.Items.Skip(10*(index-1)).Take(10);
             }
 
-            var splitLyrics = lyrics.Split('\n');
-            var stringBuilder = new StringBuilder();
-            foreach (var line in splitLyrics)
+            int i = 1;
+            foreach(LavaTrack track in tracks)
             {
-                if (Range.Contains(stringBuilder.Length))
-                {
-                    await ReplyAsync($"```{stringBuilder}```");
-                    stringBuilder.Clear();
-                }
-                else
-                {
-                    stringBuilder.AppendLine(line);
-                }
+                queueMsg.AppendLine($"{i}) {track.Title} - {track.Duration}");
+                i++;
             }
+            queueMsg.AppendLine($"\nYou have added '{queue.Count}' songs.```");
 
-            await ReplyAsync($"```{stringBuilder}```");
+            await ReplyAsync(queueMsg.ToString());
         }
+
         private Task LogAsync(LogMessage msg) => _logService.LogAsync(msg);
     }
 }
