@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Tokoyami.EF.Hangman.Entities;
+using Tokoyami.EF.Music;
 
 namespace Tokoyami.Context.Configuration
 {
@@ -16,6 +17,7 @@ namespace Tokoyami.Context.Configuration
         private TokoyamiDbContext context = null;
         private bool disposed = false;
         private TokoyamiRepository<Word> _wordRepository;
+        private TokoyamiRepository<Playlist> _playlistRepository;
 
         public TokoyamiRepository<Word> wordRepository
         {
@@ -27,6 +29,18 @@ namespace Tokoyami.Context.Configuration
                 }
                 return this._wordRepository;
             } 
+        }
+
+        public TokoyamiRepository<Playlist> playlistRepository
+        {
+            get
+            {
+                if(this._playlistRepository == null)
+                {
+                    this._playlistRepository = new TokoyamiRepository<Playlist>(context);
+                }
+                return this._playlistRepository;
+            }
         }
 
         public UnitOfWork(TokoyamiDbContext context)
