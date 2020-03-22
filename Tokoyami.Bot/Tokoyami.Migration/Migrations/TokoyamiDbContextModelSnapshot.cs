@@ -47,6 +47,27 @@ namespace Tokoyami.Context.Migrations
 
                     b.ToTable("Word","hangman");
                 });
+
+            modelBuilder.Entity("Tokoyami.EF.Music.Playlist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Author")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Urls")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Playlist","music");
+                });
 #pragma warning restore 612, 618
         }
     }

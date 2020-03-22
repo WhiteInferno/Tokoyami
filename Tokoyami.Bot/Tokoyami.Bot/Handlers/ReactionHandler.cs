@@ -6,6 +6,7 @@ using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using Tokoyami.Bot.Modules;
+using Tokoyami.Bot.Services;
 
 namespace Tokoyami.Bot
 {
@@ -14,14 +15,16 @@ namespace Tokoyami.Bot
         private DiscordSocketClient Client { get; }
         private CommandService CdmService { get; }
         private IServiceProvider Service { get; }
+        private ILogServices LogService { get; }
 
         private string[] wordsToReact = new string[] { "banana", "apple", "orange", "birthday" };
 
-        public ReactionHandler(DiscordSocketClient client, CommandService cmdService, IServiceProvider service)
+        public ReactionHandler(DiscordSocketClient client, CommandService cmdService, IServiceProvider service, ILogServices logService)
         {
             this.Client = client;
             this.CdmService = cmdService;
             this.Service = service;
+            this.LogService = logService;
         }
 
         public async Task InitalizeAsync()
@@ -73,10 +76,6 @@ namespace Tokoyami.Bot
             await mesagge.AddReactionAsync(emoji);
         }
 
-        private Task LogAsync(LogMessage logMessage)
-        {
-            Console.WriteLine(logMessage.Message);
-            return Task.CompletedTask;
-        }
+        private async Task LogAsync(LogMessage msg) => await LogService.LogAsync(msg);
     }
 }
