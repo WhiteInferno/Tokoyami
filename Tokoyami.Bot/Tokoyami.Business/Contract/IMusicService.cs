@@ -6,7 +6,7 @@ using Tokoyami.EF.Music;
 
 namespace Tokoyami.Business.Contract
 {
-    interface IMusicService
+    public interface IMusicService
     {
         Task Create(Playlist entity);
         Playlist GetById(int id);

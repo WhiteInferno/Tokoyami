@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tokoyami.Bot.Services;
+using Tokoyami.Business.Business;
+using Tokoyami.Business.Contract;
 using Tokoyami.EF.Music;
 using Victoria;
 using Victoria.Enums;
@@ -20,6 +22,7 @@ namespace Tokoyami.Bot.Modules
         private readonly LavaNode _lavaNode;
         private static readonly IEnumerable<int> Range = Enumerable.Range(1900, 2000);
         private readonly ILogServices _logService;
+        private IMusicService _service = new MusicService(Program.UnitOfWork);
         private Playlist playList { get; set; }
 
         public Music(LavaNode lavaNode, ILogServices logService)
@@ -39,7 +42,7 @@ namespace Tokoyami.Bot.Modules
 
             var voiceState = Context.User as IVoiceState;
 
-            if(voiceState!.VoiceChannel == null)
+            if (voiceState!.VoiceChannel == null)
             {
                 await ReplyAsync("You must be connected to a voice channel!");
                 return;
@@ -49,7 +52,7 @@ namespace Tokoyami.Bot.Modules
             {
                 await _lavaNode.JoinAsync(voiceState.VoiceChannel, Context.Channel as ITextChannel);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
                 await ReplyAsync("Something happened that i can't join to the VC!");
@@ -73,12 +76,12 @@ namespace Tokoyami.Bot.Modules
             }
 
             SearchResponse searchResponse;
-            
+
             try
             {
                 searchResponse = await _lavaNode.SearchAsync(query);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
                 await ReplyAsync("Something happened that i can't play the music!");
@@ -114,7 +117,7 @@ namespace Tokoyami.Bot.Modules
             }
             else
             {
-                if(this.playList == null)
+                if (this.playList == null)
                 {
                     this.playList = new Playlist();
                 }
@@ -145,7 +148,7 @@ namespace Tokoyami.Bot.Modules
                         await player.PlayAsync(track);
                         await ReplyAsync($"Now Playing: {track.Title}");
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
                         await ReplyAsync($"{track.Title} couldn't be played!");
@@ -210,7 +213,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("resume")]
+        [Command("resume"), Alias("unpause")]
         public async Task ResumeAsync()
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -294,7 +297,7 @@ namespace Tokoyami.Bot.Modules
             }
         }
 
-        [Command("seek")]
+        [Command("seek"), Alias("move")]
         public async Task SeekAsync(TimeSpan? timeSpan = null)
         {
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
@@ -309,7 +312,7 @@ namespace Tokoyami.Bot.Modules
                 return;
             }
 
-            if(timeSpan == null)
+            if (timeSpan == null)
             {
                 await ReplyAsync("You have to send me the time with the follow format `0`h`00`m`00`s");
                 return;
@@ -338,7 +341,7 @@ namespace Tokoyami.Bot.Modules
 
             try
             {
-                if(volume >= 0 && volume <= 100)
+                if (volume >= 0 && volume <= 100)
                 {
                     await player.UpdateVolumeAsync(volume);
                     await ReplyAsync($"I've changed the player volume to {volume}.");
@@ -397,24 +400,24 @@ namespace Tokoyami.Bot.Modules
 
             var queue = player.Queue;
 
-            if(queue.Count == 0)
+            if (queue.Count == 0)
             {
                 await ReplyAsync("Not currently playing anything.");
             }
 
             StringBuilder queueMsg = new StringBuilder("```nimrod\n");
             IEnumerable<IQueueable> tracks = null;
-            if(index == 1)
+            if (index == 1)
             {
                 tracks = queue.Items.Take(10);
             }
             else
             {
-                tracks = queue.Items.Skip(10*(index-1)).Take(10);
+                tracks = queue.Items.Skip(10 * (index - 1)).Take(10);
             }
 
             int i = 1;
-            foreach(LavaTrack track in tracks)
+            foreach (LavaTrack track in tracks)
             {
                 queueMsg.AppendLine($"{i}) {track.Title} - {track.Duration}");
                 i++;
@@ -422,6 +425,152 @@ namespace Tokoyami.Bot.Modules
             queueMsg.AppendLine($"\nYou have added '{queue.Count}' songs.```");
 
             await ReplyAsync(queueMsg.ToString());
+        }
+
+        [Command("playlist"), Alias("pl")]
+        [Summary("::playlist save word | ::playlist delete word | ::playlist play word | ::playlist queue")]
+        public async Task ManagePlaylist(string comm = null, string val = "a")
+        {
+            comm = comm.ToLower();
+            val = val.ToLower();
+            Playlist playlistSelected = null;
+            LavaPlayer player = null;
+            switch (comm)
+            {
+                case "save":
+                    if (!_lavaNode.TryGetPlayer(Context.Guild, out player))
+                    {
+                        await ReplyAsync("I'm not connected to a voice channel.");
+                        return;
+                    }
+
+                    var queue = player.Queue;
+
+                    Playlist entity = new Playlist()
+                    {
+                        Name = val,
+                        Author = this.Context.Message.Author.Username
+                    };
+
+                    foreach (LavaTrack track in queue.Items)
+                    {
+                        entity.Urls += track.Url + "||";
+                    }
+
+                    await this._service.Create(entity);
+                    await ReplyAsync("Playlist saved succesfull!");
+                    break;
+                case "delete":
+                    if (string.IsNullOrEmpty(val))
+                    {
+                        await ReplyAsync("Insert the name of the Playlist to Delete.");
+                        return;
+                    }
+
+                    playlistSelected = this._service.GetAll().Where(x => x.Name.ToUpper() == val.ToUpper()).FirstOrDefault();
+
+                    if (playlistSelected != null)
+                    {
+                        await this._service.Remove(playList.Id);
+                        await ReplyAsync("The Playlist is removed!");
+                    }
+                    else
+                    {
+                        await ReplyAsync("The Playlist couldn't be founded!");
+                    }
+                    break;
+                case "play":
+                    if (string.IsNullOrEmpty(val))
+                    {
+                        await ReplyAsync("Insert the name of the Playlist to Delete.");
+                        return;
+                    }
+
+                    playlistSelected = this._service.GetAll().Where(x => x.Name.ToUpper() == val.ToUpper()).FirstOrDefault();
+
+                    if (playlistSelected != null)
+                    {
+                        SearchResponse searchResponse;
+                        string[] urls = playlistSelected.Urls.Split("||");
+                        player = _lavaNode.GetPlayer(Context.Guild);
+
+                        foreach (string query in urls)
+                        {
+                            searchResponse = await _lavaNode.SearchAsync(query);
+                            if (player.PlayerState == PlayerState.Playing || player.PlayerState == PlayerState.Paused)
+                            {
+                                if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
+                                {
+                                    foreach (var track in searchResponse.Tracks)
+                                    {
+                                        player.Queue.Enqueue(track);
+                                    }
+                                }
+                                else
+                                {
+                                    var track = searchResponse.Tracks[0];
+                                    player.Queue.Enqueue(track);
+                                }
+                            }
+                            else
+                            {
+                                if (this.playList == null)
+                                {
+                                    this.playList = new Playlist();
+                                }
+
+                                var track = searchResponse.Tracks[0];
+
+                                if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
+                                {
+                                    for (var i = 0; i < searchResponse.Tracks.Count; i++)
+                                    {
+                                        if (i == 0)
+                                        {
+                                            await player.PlayAsync(track);
+                                        }
+                                        else
+                                        {
+                                            player.Queue.Enqueue(searchResponse.Tracks[i]);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        await player.PlayAsync(track);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        await this.LogAsync(new LogMessage(LogSeverity.Error, "Music Module", ex.Message));
+                                        await ReplyAsync($"{track.Title} couldn't be played!");
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        await ReplyAsync($"Enqueued {urls.Length} tracks.");
+                    }
+                    else
+                    {
+                        await ReplyAsync("The Playlist couldn't be founded!");
+                    }
+                    break;
+                case "queue":
+                    StringBuilder queueMsg = new StringBuilder("```nimrod\n");
+
+                    List<Playlist> list = this._service.GetAll().ToList();
+                    foreach (Playlist item in list)
+                    {
+                        queueMsg.AppendLine($"{item.Name} - {item.Author}");
+                    }
+
+                    queueMsg.AppendLine($"\n```");
+
+                    await ReplyAsync(queueMsg.ToString());
+                    break;
+            }
         }
 
         private Task LogAsync(LogMessage msg) => _logService.LogAsync(msg);
